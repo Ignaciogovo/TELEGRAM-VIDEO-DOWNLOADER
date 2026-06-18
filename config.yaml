@@ -1,0 +1,21 @@
+# Telegram API credentials
+# Obtén api_id y api_hash en https://my.telegram.org/apps
+# 1. Inicia sesión con tu número de teléfono
+# 2. Ve a "API development tools"
+# 3. Crea una nueva aplicación (puede ser cualquier nombre y descripción)
+# 4. Copia el App api_id y App api_hash
+api_id: 12345678
+api_hash: "tu_api_hash_aqui"
+
+# Nombre de la sesión (archivo .session donde se guarda la autenticación)
+session_name: "telegram_downloader"
+
+# Username del canal de Telegram (con @ o sin @)
+# Ejemplo: "durov" o "@durov"
+channel_username: "tu_canal_aqui"
+
+# Directorio donde se guardarán los vídeos descargados
+output_dir: "./downloads"
+
+# Nivel de log: DEBUG, INFO, WARNING, ERROR, CRITICAL
+log_level: "INFO"
