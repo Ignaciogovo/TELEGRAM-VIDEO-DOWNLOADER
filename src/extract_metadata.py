@@ -68,6 +68,12 @@ async def main() -> None:
     else:
         target_channel = channels[0]
 
+    # Convert numeric channel ID from string to int for Telethon
+    try:
+        target_channel = int(target_channel)
+    except ValueError:
+        pass
+
     client = TelegramClient("telegram_downloader", api_id, api_hash)
     await client.start()
 

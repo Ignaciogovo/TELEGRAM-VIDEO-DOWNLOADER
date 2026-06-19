@@ -150,7 +150,14 @@ async def main() -> None:
             logger.info("=" * 50)
 
             try:
-                entity = await client.get_entity(channel_username)
+                # Convert numeric channel ID from string to int for Telethon
+                channel_entity_arg = channel_username
+                try:
+                    channel_entity_arg = int(channel_username)
+                except ValueError:
+                    pass
+
+                entity = await client.get_entity(channel_entity_arg)
                 channel_id = str(entity.id)
                 channel_title = getattr(entity, "title", channel_username)
 

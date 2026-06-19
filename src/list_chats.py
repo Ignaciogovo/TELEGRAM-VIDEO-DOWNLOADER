@@ -13,7 +13,7 @@ async def main():
     api_id = int(os.environ["TELEGRAM_API_ID"])
     api_hash = os.environ["TELEGRAM_API_HASH"]
 
-    client = TelegramClient("list_chats_session", api_id, api_hash)
+    client = TelegramClient("telegram_downloader", api_id, api_hash)
     await client.start()
 
     print(f"\nConectado como: {await client.get_me()}\n")
