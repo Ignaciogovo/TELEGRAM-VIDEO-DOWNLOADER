@@ -1,38 +1,17 @@
 ## Git Workflow
 
-### Estructura de ramas
-- `master` → Producción (solo merges desde develop)
-- `develop` → Integración (rama principal de desarrollo)
-- `feature/<descripcion>` → Cambios específicos (desde develop, merge a develop)
+- `master` → producción
+- `develop` → integración
+- `feature/<nombre>` → cambios (desde develop, merge a develop)
 
-### Flujo de trabajo
-1. Partir siempre de `develop` actualizada
-2. Crear rama feature: `git checkout -b feature/<descripcion-cambio>`
-3. Realizar cambios y commit en la rama feature
-4. Merge a `develop` para revisión
-5. Una vez validado, merge de `develop` a `master`
+No mergear a develop hasta validación del usuario. No iniciar siguiente fase sin confirmación.
 
-### Convenciones de commits
-- `feat:` nueva funcionalidad
-- `fix:` corrección de bug
-- `docs:` documentación
-- `refactor:` refactorización sin cambio funcional
-- `chore:` tareas de mantenimiento
+### Commits
 
-### Fases del proyecto
-- Cada fase se desarrolla en su propia rama feature
-- No mergear a develop hasta que el usuario valide la fase
-- No iniciar la siguiente fase sin confirmación explícita del usuario
+`feat:` nueva funcionalidad | `fix:` bug | `docs:` documentación | `refactor:` sin cambio funcional | `chore:` mantenimiento
 
-### Seguridad
-La seguridad es una **PRIORIDAD** del proyecto. Los vídeos descargados de fuentes
-no verificadas pueden contener malware embebido.
+## Seguridad
 
-- TODO vídeo descargado tiene una probabilidad configurable de ser escaneado
-- Motor por defecto: ClamAV (local, offline)
-- Motor alternativo: VirusTotal API (cloud, multi-engine)
-- Si un fichero se detecta como amenaza, se mueve a `downloads/quarantine/` y se registra
-- Si el motor de escaneo no está disponible, se registra un WARNING pero la descarga continúa
-- NUNCA desactivar el escaneo en producción sin justificación documentada
-- Las credenciales API y claves de sesión NUNCA deben commitearse al repositorio
-- `.env` y `*.session` están en `.gitignore` y no deben excluirse
+- Escaneo aleatorio configurable (ClamAV/VirusTotal)
+- Amenazas → `downloads/quarantine/`
+- NUNCA commitear `.env` ni `*.session` (están en `.gitignore`)
