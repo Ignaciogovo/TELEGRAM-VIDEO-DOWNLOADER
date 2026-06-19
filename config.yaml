@@ -10,11 +10,11 @@ log_level: "INFO"
 # ============================================
 # FASE 2: Mapeo de canales a carpetas
 # ============================================
-# Cada canal (por ID numérico o username) se asigna a una carpeta.
-# Varios canales pueden apuntar a la misma carpeta.
-# Si un canal no está en el mapeo, se usa default_folder.
+# Las carpetas se asignan por el orden de TELEGRAM_CHANNELS en .env
+# Índice 0 = primer canal, 1 = segundo, 2 = tercero, etc.
+# Canales sin índice definido → default_folder
 channel_folders:
-  "-1002523901612": "peliculas"
+  0: "peliculas"
 
 default_folder: "uncategorized"
 

@@ -144,9 +144,9 @@ async def main() -> None:
         sys.exit(2)
 
     try:
-        for channel_username in target_channels:
+        for channel_index, channel_username in enumerate(target_channels):
             logger.info("=" * 50)
-            logger.info("Verificando canal: %s", channel_username)
+            logger.info("Verificando canal: %s (índice: %d)", channel_username, channel_index)
             logger.info("=" * 50)
 
             try:
@@ -167,6 +167,7 @@ async def main() -> None:
                     notifier=notifier,
                     dry_run=args.dry_run,
                     from_start=True,
+                    channel_index=channel_index,
                 )
 
             except errors.UsernameNotOccupiedError:

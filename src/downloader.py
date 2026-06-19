@@ -97,19 +97,19 @@ def format_size(size_bytes: int) -> str:
 
 
 def get_folder_for_channel(
-    channel_id: str, channel_folders: dict, default_folder: str
+    channel_index: int, channel_folders: dict, default_folder: str
 ) -> str:
-    """Get the destination folder for a channel.
+    """Get the destination folder for a channel by its position in TELEGRAM_CHANNELS.
 
     Args:
-        channel_id: The channel ID (string).
-        channel_folders: Mapping of channel IDs to folder names.
-        default_folder: Default folder if channel not in mapping.
+        channel_index: The channel's position in TELEGRAM_CHANNELS (0-based).
+        channel_folders: Mapping of channel indices to folder names.
+        default_folder: Default folder if index not in mapping.
 
     Returns:
         Folder name for this channel.
     """
-    return channel_folders.get(channel_id, default_folder)
+    return channel_folders.get(channel_index, default_folder)
 
 
 def build_output_path(
@@ -280,6 +280,7 @@ async def run_bulk_download(
     notifier: Optional[Notifier] = None,
     dry_run: bool = False,
     from_start: bool = False,
+    channel_index: int = 0,
 ) -> DownloadSummary:
     """Execute bulk download for a channel.
 
@@ -293,6 +294,7 @@ async def run_bulk_download(
         scanner: SecurityScanner instance.
         dry_run: If True, simulate without downloading.
         from_start: If True, scan from beginning (ignore checkpoint).
+        channel_index: Position in TELEGRAM_CHANNELS (0-based).
 
     Returns:
         DownloadSummary with statistics.
@@ -306,7 +308,7 @@ async def run_bulk_download(
     delay = config.get("download_delay_seconds", 30)
     max_daily = config.get("max_daily_downloads", 50)
 
-    folder = get_folder_for_channel(channel_id, channel_folders, default_folder)
+    folder = get_folder_for_channel(channel_index, channel_folders, default_folder)
     logger.info("Carpeta destino para este canal: %s", folder)
 
     checkpoint = 0

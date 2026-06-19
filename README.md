@@ -80,10 +80,11 @@ session_name: "telegram_downloader"
 output_dir: "./downloads"
 log_level: "INFO"
 
-# Mapeo de canales a carpetas
+# Mapeo de canales a carpetas (por índice en TELEGRAM_CHANNELS)
+# Índice 0 = primer canal, 1 = segundo, etc.
 channel_folders:
-  "-1002523901612": "peliculas"
-  "-1001234567890": "peliculas"
+  0: "peliculas"
+  1: "series"
 default_folder: "uncategorized"
 
 # Filtros
@@ -98,10 +99,25 @@ security:
   scan_probability: 0.1         # 10% se escanean
 ```
 
+> **Nota:** Los canales se definen en `.env` (`TELEGRAM_CHANNELS`). El índice en `channel_folders` corresponde al orden en esa lista.
+
 ### Encontrar el ID de un canal privado
 
 ```bash
 python src/list_chats.py
+```
+
+### Extraer metadatos sin descargar
+
+```bash
+# Últimos 20 vídeos del primer canal en TELEGRAM_CHANNELS
+python src/extract_metadata.py
+
+# Últimos 50 vídeos del primer canal
+python src/extract_metadata.py 50
+
+# Canal específico
+python src/extract_metadata.py 20 -1001234567890
 ```
 
 ## Uso

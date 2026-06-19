@@ -25,6 +25,7 @@ from tqdm import tqdm
 from src.downloader import run_bulk_download
 from src.history import DownloadHistory
 from src.scanner import SecurityScanner
+from src.logger import setup_logging
 
 logger = logging.getLogger(__name__)
 
@@ -86,20 +87,6 @@ def load_config(config_path: str) -> dict:
     with open(config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
     return config
-
-
-def setup_logging(log_level: str) -> None:
-    """Configure logging with the specified level.
-
-    Args:
-        log_level: Logging level as a string.
-    """
-    numeric_level = getattr(logging, log_level.upper(), logging.INFO)
-    logging.basicConfig(
-        level=numeric_level,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
 
 
 async def get_entity(
@@ -390,7 +377,8 @@ async def main() -> None:
     """Main entry point."""
     args = parse_args()
     config = load_config(args.config)
-    setup_logging(config.get("log_level", "INFO"))
+    log_dir = "./downloads/logs"
+    setup_logging(config.get("log_level", "INFO"), log_dir)
 
     if args.stats:
         output_dir = config.get("output_dir", "./downloads")
@@ -431,9 +419,9 @@ async def main() -> None:
                 output_dir=output_dir,
             )
 
-            for channel_username in target_channels:
+            for channel_index, channel_username in enumerate(target_channels):
                 logger.info("=" * 50)
-                logger.info("Canal: %s", channel_username)
+                logger.info("Canal: %s (índice: %d)", channel_username, channel_index)
                 logger.info("=" * 50)
 
                 try:
@@ -451,6 +439,7 @@ async def main() -> None:
                         scanner=scanner,
                         dry_run=args.dry_run,
                         from_start=False,
+                        channel_index=channel_index,
                     )
 
                 except ValueError as e:
