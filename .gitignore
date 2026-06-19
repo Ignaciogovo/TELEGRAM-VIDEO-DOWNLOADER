@@ -19,6 +19,9 @@ __pycache__/
 dist/
 build/
 
+# Test results
+test_results.json
+
 # IDE
 .idea/
 .vscode/
