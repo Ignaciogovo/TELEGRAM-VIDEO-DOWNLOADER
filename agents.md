@@ -180,8 +180,8 @@ Sin validación del usuario = sin merge, sin avanzar.
 
 **Rama activa:** `feature/fase-2-bulk-download`
 **Fase:** 2 (Descarga Masiva)
-**Estado:** En progreso, to-dos definidos
-**Próximo paso:** Ejecutar TODO 1
+**Estado:** En progreso, 1/8 todos completados
+**Próximo paso:** TODO 2 (Verificación de integridad de archivos)
 
 ## 11. To-dos Pendientes Fase 2
 
@@ -227,7 +227,7 @@ Sin validación del usuario = sin merge, sin avanzar.
 
 | # | Todo | Estado |
 |---|------|--------|
-| 1 | Corregir paths hardcoded | ⏳ Pendiente |
+| 1 | Corregir paths hardcoded | ✅ Completado |
 | 2 | Verificación de integridad | ⏳ Pendiente |
 | 3 | Archivos parcialmente descargados | ⏳ Pendiente |
 | 4 | Resumen final de sesión | ⏳ Pendiente |
