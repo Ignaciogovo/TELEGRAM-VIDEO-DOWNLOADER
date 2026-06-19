@@ -1,21 +1,45 @@
-# Telegram API credentials
-# Obtén api_id y api_hash en https://my.telegram.org/apps
-# 1. Inicia sesión con tu número de teléfono
-# 2. Ve a "API development tools"
-# 3. Crea una nueva aplicación (puede ser cualquier nombre y descripción)
-# 4. Copia el App api_id y App api_hash
-api_id: 12345678
-api_hash: "tu_api_hash_aqui"
-
 # Nombre de la sesión (archivo .session donde se guarda la autenticación)
 session_name: "telegram_downloader"
-
-# Username del canal de Telegram (con @ o sin @)
-# Ejemplo: "durov" o "@durov"
-channel_username: "tu_canal_aqui"
 
 # Directorio donde se guardarán los vídeos descargados
 output_dir: "./downloads"
 
 # Nivel de log: DEBUG, INFO, WARNING, ERROR, CRITICAL
 log_level: "INFO"
+
+# ============================================
+# FASE 2: Mapeo de canales a carpetas
+# ============================================
+# Cada canal (por ID numérico o username) se asigna a una carpeta.
+# Varios canales pueden apuntar a la misma carpeta.
+# Si un canal no está en el mapeo, se usa default_folder.
+channel_folders:
+  "-1002523901612": "peliculas"
+
+default_folder: "uncategorized"
+
+# ============================================
+# FASE 2: Filtros de descarga
+# ============================================
+
+# Duración mínima en segundos para descargar un vídeo
+# Los vídeos más cortos se registran como "saltados" y no se vuelven a evaluar
+min_duration_seconds: 300
+
+# Segundos de espera entre cada descarga
+download_delay_seconds: 30
+
+# Máximo número de descargas por día
+max_daily_downloads: 50
+
+# ============================================
+# FASE 2: Escaneo de seguridad
+# ============================================
+security:
+  # Activar/desactivar escaneo de seguridad
+  enabled: true
+  # Motor de escaneo: "clamav" o "virustotal"
+  engine: "clamav"
+  # Probabilidad de escanear cada vídeo (0.0 a 1.0)
+  # 0.1 = 10% de los vídeos se escanean (tipo aeropuerto)
+  scan_probability: 0.1

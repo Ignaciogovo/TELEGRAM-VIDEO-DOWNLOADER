@@ -1,0 +1,30 @@
+# Secrets
+.env
+
+# Session files (contain auth tokens)
+*.session
+
+# Downloaded content
+downloads/
+
+# Virtual environments
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

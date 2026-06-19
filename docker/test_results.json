@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-06-19T10:58:47+02:00",
+  "tests": [
+    {"name":"docker_build","status":"pass","message":"Imagen construida correctamente","details":"Tiempo: 2s"},{"name":"container_execution","status":"pass","message":"Contenedor ejecutado correctamente","details":"Tiempo: 1s"},{"name":"volumes_created","status":"pass","message":"Todos los volúmenes creados","details":"Volúmenes: 4/4"},{"name":"logs_generated","status":"pass","message":"Archivo de log generado","details":"Líneas: 2"},{"name":"notifications_created","status":"skip","message":"No hay archivo de notificaciones (puede ser normal si no hubo errores)","details":"Verifica manualmente"},{"name":"forced_notifications","status":"fail","message":"No se generaron suficientes notificaciones","details":"Esperadas: 3, Obtenidas: 0"},{"name":"performance","status":"pass","message":"Test de rendimiento completado","details":"Tiempo: 1s, Memoria: 0B, Imagen: 374MB"},{"name":"run_script","status":"pass","message":"Script run.sh ejecutado correctamente","details":"Verifica logs para más detalles"}
+  ],
+  "summary": {
+    "total": 8,
+    "passed": 6,
+    "failed": 1,
+    "skipped": 1
+  }
+}
