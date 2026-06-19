@@ -13,7 +13,7 @@ class Notifier:
 
     def __init__(
         self,
-        notifications_dir: str = "/app/notifications",
+        notifications_dir: str = "./downloads/notifications",
         notification_email: Optional[str] = None
     ) -> None:
         """Inicializar notificador.
