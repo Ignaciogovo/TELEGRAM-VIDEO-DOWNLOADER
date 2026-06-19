@@ -180,10 +180,63 @@ Sin validación del usuario = sin merge, sin avanzar.
 
 **Rama activa:** `feature/fase-2-bulk-download`
 **Fase:** 2 (Descarga Masiva)
-**Estado:** En progreso, no validada
-**Próximo paso:** Definir todos pendientes de Fase 2
+**Estado:** En progreso, to-dos definidos
+**Próximo paso:** Ejecutar TODO 1
 
-## 11. Checklist de Validación de Fase
+## 11. To-dos Pendientes Fase 2
+
+### TODO 1: Corregir paths hardcoded
+- `notifier.py`: cambiar default de `/app/notifications` a `./downloads/notifications`
+- `logger.py`: cambiar default de `/app/logs` a `./downloads/logs`
+- Ambos deben respetar `output_dir` de `config.yaml`
+
+### TODO 2: Verificación de integridad de archivos descargados
+- Validar que el archivo descargado es un vídeo válido
+- Si no es válido, mover a cuarentena y notificar
+- Registrar en historial como "invalid"
+
+### TODO 3: Manejo de archivos parcialmente descargados
+- Detectar archivos temporales o incompletos
+- Limpiar archivos incompletos al iniciar sesión
+- Opción de reintentar descargas fallidas
+
+### TODO 4: Resumen final de sesión
+- Mostrar resumen detallado al finalizar sesión
+- Incluir: vídeos encontrados, descargados, saltados, errores
+- Tiempo total, velocidad promedio, espacio usado
+- Guardar resumen en log
+
+### TODO 5: Notificación de finalización
+- Generar notificación JSON cuando se completa una sesión
+- Incluir resumen de la sesión
+
+### TODO 6: Validación de espacio en disco
+- Antes de descargar, verificar espacio disponible
+- Si no hay espacio suficiente, notificar y detener
+
+### TODO 7: Tests automatizados básicos
+- Crear script de tests sin Docker
+- Tests de: configuración, historial, notificaciones, escáner
+
+### TODO 8: Timeout y reintentos configurables
+- Timeout configurable para descargas
+- Límite de reintentos por vídeo
+- Logging de velocidad de descarga
+
+## 12. Progreso de To-dos
+
+| # | Todo | Estado |
+|---|------|--------|
+| 1 | Corregir paths hardcoded | ⏳ Pendiente |
+| 2 | Verificación de integridad | ⏳ Pendiente |
+| 3 | Archivos parcialmente descargados | ⏳ Pendiente |
+| 4 | Resumen final de sesión | ⏳ Pendiente |
+| 5 | Notificación de finalización | ⏳ Pendiente |
+| 6 | Validación de espacio en disco | ⏳ Pendiente |
+| 7 | Tests automatizados | ⏳ Pendiente |
+| 8 | Timeout y reintentos | ⏳ Pendiente |
+
+## 13. Checklist de Validación de Fase
 
 Antes de considerar una fase completa:
 - [ ] Todos los todos completados
