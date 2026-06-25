@@ -1,5 +1,7 @@
 # Nombre de la sesión (archivo .session donde se guarda la autenticación)
-session_name: "telegram_downloader"
+# En Docker: "session_data/telegram_downloader" (volumen montado)
+# En local: "telegram_downloader" (archivo en raíz)
+session_name: "session_data/telegram_downloader"
 
 # Directorio donde se guardarán los vídeos descargados
 output_dir: "./downloads"
