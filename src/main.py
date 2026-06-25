@@ -26,6 +26,7 @@ from src.downloader import run_bulk_download
 from src.history import DownloadHistory
 from src.scanner import SecurityScanner
 from src.logger import setup_logging
+from src.utils import format_size
 
 logger = logging.getLogger(__name__)
 
@@ -147,33 +148,6 @@ async def find_latest_video_message(
     return None
 
 
-async def get_message_by_id(
-    client: TelegramClient, channel_entity: types.InputChannel, message_id: int
-) -> Optional[types.Message]:
-    """Fetch a specific message by ID.
-
-    Args:
-        client: Authenticated TelegramClient.
-        channel_entity: The channel entity.
-        message_id: The message ID.
-
-    Returns:
-        The Message if found.
-
-    Raises:
-        ValueError: If message not found or has no video.
-    """
-    try:
-        messages = await client.get_messages(channel_entity, ids=message_id)
-        if messages is None:
-            raise ValueError(f"Mensaje con id={message_id} no encontrado.")
-        if not messages.video:
-            raise ValueError(f"El mensaje con id={message_id} no contiene un vídeo.")
-        return messages
-    except errors.MessageIdInvalidError:
-        raise ValueError(f"Mensaje con id={message_id} no válido.")
-
-
 def build_output_path(
     output_dir: str, message: types.Message
 ) -> str:
@@ -201,61 +175,6 @@ def build_output_path(
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     return os.path.join(output_dir, f"video_{message.id}_{timestamp}.mp4")
-
-
-async def download_video(
-    client: TelegramClient, message: types.Message, output_path: str
-) -> int:
-    """Download a video with progress bar.
-
-    Args:
-        client: Authenticated TelegramClient.
-        message: The message containing the video.
-        output_path: Full path to save the file.
-
-    Returns:
-        Size of downloaded file in bytes.
-    """
-    video = message.video
-    file_size = video.size
-
-    pbar = tqdm(
-        total=file_size,
-        unit="B",
-        unit_scale=True,
-        unit_divisor=1024,
-        desc=f"Descargando message_id={message.id}",
-        colour="green",
-    )
-
-    def progress_callback(current: int, _total: int) -> None:
-        pbar.n = current
-        pbar.refresh()
-
-    await client.download_file(
-        input_location=video,
-        file=output_path,
-        progress_callback=progress_callback,
-    )
-
-    pbar.close()
-    return os.path.getsize(output_path)
-
-
-def format_size(size_bytes: int) -> str:
-    """Format bytes to human-readable string.
-
-    Args:
-        size_bytes: Size in bytes.
-
-    Returns:
-        Human-readable size string.
-    """
-    for unit in ("B", "KB", "MB", "GB"):
-        if size_bytes < 1024:
-            return f"{size_bytes:.1f} {unit}"
-        size_bytes /= 1024
-    return f"{size_bytes:.1f} TB"
 
 
 def parse_args() -> argparse.Namespace:
