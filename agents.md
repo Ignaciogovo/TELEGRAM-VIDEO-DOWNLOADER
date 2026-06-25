@@ -156,7 +156,7 @@ Sin validación del usuario = sin merge, sin avanzar.
 - Descarga de un vídeo
 - Progreso en terminal
 
-### Fase 2: Descarga Masiva 🔄 EN PROGRESO
+### Fase 2: Descarga Masiva ✅ COMPLETADA
 - Historial SQLite
 - Filtros (duración, límite por ejecución)
 - Mapeo canales → carpetas
@@ -222,9 +222,9 @@ docker run --rm --env-file .env \
 ## 10. Estado Actual
 
 **Rama activa:** `feature/fase-2-bulk-download`
-**Fase:** 2 (Descarga Masiva)
-**Estado:** Todos los todos completados (8/8) - Pendiente validación del usuario
-**Próximo paso:** Esperar validación del usuario para merge a develop
+**Fase:** 2 (Descarga Masiva) ✅ COMPLETADA
+**Estado:** Todos los todos completados (8/8) - Listo para merge a develop
+**Próximo paso:** Merge a develop y comenzar Fase 3 (Docker + Cron)
 
 ## 11. To-dos Pendientes Fase 2
 
