@@ -29,8 +29,17 @@ min_duration_seconds: 300
 # Segundos de espera entre cada descarga
 download_delay_seconds: 30
 
-# Máximo número de descargas por día
-max_daily_downloads: 50
+# Máximo número de descargas por ejecución del script
+max_downloads_per_run: 50
+
+# Timeout máximo en segundos para una descarga (default 1 hora)
+download_timeout_seconds: 3600
+
+# Máximo número de reintentos por vídeo
+max_download_retries: 3
+
+# Espacio mínimo libre en MB antes de detener descargas
+min_free_space_mb: 500
 
 # ============================================
 # FASE 2: Escaneo de seguridad

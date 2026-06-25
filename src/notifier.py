@@ -91,6 +91,26 @@ class Notifier:
             metadata=metadata or {}
         )
 
+    def notify_session_complete(
+        self,
+        subject: str,
+        message: str,
+        metadata: Optional[dict] = None
+    ) -> None:
+        """Crear notificación de sesión completada.
+
+        Args:
+            subject: Asunto de la notificación.
+            message: Mensaje de resumen.
+            metadata: Metadatos con estadísticas de la sesión.
+        """
+        self._add_notification(
+            notification_type="session_complete",
+            subject=subject,
+            message=message,
+            metadata=metadata or {}
+        )
+
     def _add_notification(
         self,
         notification_type: str,
