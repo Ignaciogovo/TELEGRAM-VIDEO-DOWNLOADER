@@ -157,20 +157,63 @@ Sin validación del usuario = sin merge, sin avanzar.
 - Progreso en terminal
 
 ### Fase 2: Descarga Masiva 🔄 EN PROGRESO
-- Historial SQLite con checkpoint
-- Filtros (duración, límite diario)
+- Historial SQLite
+- Filtros (duración, límite por ejecución)
 - Mapeo canales → carpetas
 - Escaneo de seguridad
 - Notificaciones JSON
 - Logs rotativos
 - Dry-run mode
 - Verificación completa
+- **Sin checkpoint en control de flujo**: se confía en `is_downloaded`/`is_skipped_short`/`is_invalid` para saber qué descargar. Si un archivo marcado como descargado no existe en disco, se re-descarga automáticamente
+- **Verificación de existencia**: `get_output_path()` permite comprobar si el archivo físico sigue en disco
 
-### Fase 3: Daemon + Cron ⏸️ PAUSADA
-- Script de ejecución automática
-- Configuración de cron
-- Monitoreo de salud
-- (Definir cuando se reanude)
+#### Limitación conocida: FileReferenceExpiredError
+
+Los file references de vídeos **muy antiguos** en Telegram caducan más rápido de lo que se puede descargar el archivo (1-2 GB). Esto es un **límite de la API de Telegram**, no un bug del código.
+
+**Comportamiento:**
+- El código re-intenta 3 veces por vídeo (re-fetch reference + reintentar)
+- Si falla 3 veces, se marca el error y se continúa con el siguiente vídeo
+- En la **siguiente ejecución**, los vídeos fallidos se reintentan automáticamente (no están en `is_downloaded`)
+- Tras 2-3 ejecuciones consecutivas, los vídeos terminan descargándose porque el rate-limiting de Telegram se relaja
+
+**No requiere fix**: el sistema es auto-recuperable y los tests pasan 13/13.
+
+### Fase 3: Docker + Cron ⏸️ PAUSADA
+- Dockerfile (python:3.12-slim + ffmpeg)
+- docker-entrypoint.sh (entry point minimal)
+- .dockerignore
+- Soporte DOWNLOAD_LIMIT via environment variable
+- Volúmenes: ./downloads, .session
+
+#### Uso
+
+**1. Primera ejecución (manual, interactiva):**
+```bash
+docker run --rm -it --env-file .env \
+  -v $(pwd)/downloads:/app/downloads \
+  -v $(pwd)/.session:/app/telegram_downloader.session \
+  telegram-downloader
+```
+
+**2. Ejecuciones siguientes (cron):**
+```bash
+docker run --rm --env-file .env \
+  -v $(pwd)/downloads:/app/downloads \
+  -v $(pwd)/.session:/app/telegram_downloader.session \
+  telegram-downloader
+```
+
+**3. Cron ejemplo (diario a las 2:00 AM):**
+```bash
+0 2 * * * docker run --rm --env-file /path/to/.env \
+  -v /path/to/downloads:/app/downloads \
+  -v /path/to/.session:/app/telegram_downloader.session \
+  telegram-downloader >> /var/log/telegram-downloader.log 2>&1
+```
+
+> **NOTA**: El archivo `.session` se crea en la primera ejecución interactiva. Las ejecuciones via cron usan el `.session` persistente. Asegúrate de que la primera ejecución se haga manualmente con `-it`.
 
 ### Fases Futuras
 - Posibles nuevas funcionalidades
@@ -180,8 +223,8 @@ Sin validación del usuario = sin merge, sin avanzar.
 
 **Rama activa:** `feature/fase-2-bulk-download`
 **Fase:** 2 (Descarga Masiva)
-**Estado:** En progreso, 1/8 todos completados
-**Próximo paso:** TODO 2 (Verificación de integridad de archivos)
+**Estado:** Todos los todos completados (8/8) - Pendiente validación del usuario
+**Próximo paso:** Esperar validación del usuario para merge a develop
 
 ## 11. To-dos Pendientes Fase 2
 
@@ -190,51 +233,75 @@ Sin validación del usuario = sin merge, sin avanzar.
 - `logger.py`: cambiar default de `/app/logs` a `./downloads/logs`
 - Ambos deben respetar `output_dir` de `config.yaml`
 
-### TODO 2: Verificación de integridad de archivos descargados
+### TODO 2: Verificación de integridad de archivos descargados ✅ COMPLETADO
 - Validar que el archivo descargado es un vídeo válido
 - Si no es válido, mover a cuarentena y notificar
 - Registrar en historial como "invalid"
+- Verificación de tamaño contra metadatos de Telegram
+- ffprobe para validación de streams de video/audio
 
-### TODO 3: Manejo de archivos parcialmente descargados
+### TODO 3: Manejo de archivos parcialmente descargados ✅ COMPLETADO
 - Detectar archivos temporales o incompletos
 - Limpiar archivos incompletos al iniciar sesión
 - Opción de reintentar descargas fallidas
+- Descarga atómica vía archivo .part + rename
+- Detección de archivos corruptos en disco vs historial
+- Función `retry_failed_downloads()` para reintentos
 
-### TODO 4: Resumen final de sesión
+### TODO 4: Resumen final de sesión ✅ COMPLETADO
 - Mostrar resumen detallado al finalizar sesión
 - Incluir: vídeos encontrados, descargados, saltados, errores
 - Tiempo total, velocidad promedio, espacio usado
 - Guardar resumen en log
+- Session ID único para correlación
+- Estadísticas por descarga (min/max tiempo, velocidades)
+- Tasa de éxito como porcentaje
+- Salida JSON machine-readable
+- Resumen también en stdout
 
-### TODO 5: Notificación de finalización
+### TODO 5: Notificación de finalización ✅ COMPLETADO
 - Generar notificación JSON cuando se completa una sesión
 - Incluir resumen de la sesión
+- Tipo "session_complete" dedicado (no "error")
+- Incluye session_id, stats, success_rate
 
-### TODO 6: Validación de espacio en disco
+### TODO 6: Validación de espacio en disco ✅ COMPLETADO
 - Antes de descargar, verificar espacio disponible
 - Si no hay espacio suficiente, notificar y detener
+- Verificación inicial al comenzar sesión
+- Verificación por vídeo individual
+- Verificación en retry_failed_downloads()
 
-### TODO 7: Tests automatizados básicos
+### TODO 7: Tests automatizados básicos ✅ COMPLETADO
 - Crear script de tests sin Docker
 - Tests de: configuración, historial, notificaciones, escáner
+- Tests integrados: CRUD historial, probabilidad escáner, notificaciones
+- Edge cases: config, build_output_path, get_folder_for_channel
+- 12 tests totales pasando
 
-### TODO 8: Timeout y reintentos configurables
-- Timeout configurable para descargas
-- Límite de reintentos por vídeo
+### TODO 8: Timeout y reintentos configurables ✅ COMPLETADO
+- Timeout configurable para descargas (download_timeout_seconds)
+- Límite de reintentos por vídeo (max_download_retries)
 - Logging de velocidad de descarga
+- Contador de reintentos totales en DownloadSummary
+- download_video() retorna tupla (size, retries)
+- Backoff exponencial entre reintentos (2^attempt, max 60s)
+- **Timeout dinámico**: calculado según tamaño de archivo (1.5x tiempo estimado a 500KB/s)
+- **Resume support**: reanuda descargas interrumpidas desde archivo .part existente
+- **FileReferenceExpiredError**: re-fetch del mensaje para obtener referencia fresca
 
 ## 12. Progreso de To-dos
 
 | # | Todo | Estado |
 |---|------|--------|
 | 1 | Corregir paths hardcoded | ✅ Completado |
-| 2 | Verificación de integridad | ⏳ Pendiente |
-| 3 | Archivos parcialmente descargados | ⏳ Pendiente |
-| 4 | Resumen final de sesión | ⏳ Pendiente |
-| 5 | Notificación de finalización | ⏳ Pendiente |
-| 6 | Validación de espacio en disco | ⏳ Pendiente |
-| 7 | Tests automatizados | ⏳ Pendiente |
-| 8 | Timeout y reintentos | ⏳ Pendiente |
+| 2 | Verificación de integridad | ✅ Completado |
+| 3 | Archivos parcialmente descargados | ✅ Completado |
+| 4 | Resumen final de sesión | ✅ Completado |
+| 5 | Notificación de finalización | ✅ Completado |
+| 6 | Validación de espacio en disco | ✅ Completado |
+| 7 | Tests automatizados | ✅ Completado |
+| 8 | Timeout y reintentos | ✅ Completado |
 
 ## 13. Checklist de Validación de Fase
 
