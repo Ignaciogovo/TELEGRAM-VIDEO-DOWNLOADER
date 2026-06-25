@@ -95,6 +95,76 @@ source venv/bin/activate
 | Ver últimos 20 vídeos sin descargar | `python src/extract_metadata.py 20` |
 | Generar notificaciones de prueba | `python src/test_notifications.py` |
 
+## Docker
+
+### Build
+
+**Single-arch (más rápido):**
+```bash
+docker build -t telegram-downloader .
+```
+
+**Multi-arch (linux/amd64, linux/arm64):**
+```bash
+docker buildx create --use  # Solo la primera vez
+docker buildx build --platform linux/amd64,linux/arm64 -t telegram-downloader .
+```
+
+### Primera ejecución (autenticación interactiva)
+
+```bash
+mkdir -p downloads session_data
+
+docker run --rm -it --env-file .env \
+  -v $(pwd)/downloads:/app/downloads \
+  -v $(pwd)/session_data:/app/session_data \
+  telegram-downloader
+```
+
+Introduce el código de Telegram cuando se pida. La sesión se guarda en `session_data/telegram_downloader.session`.
+
+### Ejecuciones siguientes (cron, sin -it)
+
+```bash
+docker run --rm --env-file .env \
+  -v $(pwd)/downloads:/app/downloads \
+  -v $(pwd)/session_data:/app/session_data \
+  telegram-downloader
+```
+
+### Variables de entorno
+
+| Variable | Descripción | Default |
+|----------|-------------|---------|
+| `DOWNLOAD_LIMIT` | Sobrescribe `max_downloads_per_run` | - |
+| `TELEGRAM_API_ID` | Telegram API ID (en .env) | requerido |
+| `TELEGRAM_API_HASH` | Telegram API hash (en .env) | requerido |
+| `TELEGRAM_CHANNELS` | Canales a descargar (en .env) | requerido |
+| `NOTIFICATION_EMAIL` | Email destino notificaciones | admin@example.com |
+| `VT_API_KEY` | API key de VirusTotal | vacío |
+
+### Volúmenes
+
+| Path contenedor | Propósito |
+|------------------|-----------|
+| `/app/downloads` | Vídeos descargados (persistente) |
+| `/app/session_data` | Sesión Telegram (persistente) |
+
+### Cron ejemplo (diario a las 2:00 AM)
+
+```bash
+0 2 * * * cd /path/to/project && docker run --rm --env-file .env \
+  -v $(pwd)/downloads:/app/downloads \
+  -v $(pwd)/session_data:/app/session_data \
+  telegram-downloader >> /var/log/telegram-downloader.log 2>&1
+```
+
+### Notas
+
+- El contenedor ejecuta como usuario no-root (`appuser` UID/GID 1000)
+- `tini` se usa como PID 1 para manejo correcto de señales
+- `freshclam` actualiza firmas de ClamAV durante el build (no requiere red en runtime)
+
 ## Seguridad
 
 Cada vídeo tiene un 10% de probabilidad de ser escaneado por ClamAV o VirusTotal. Si se detecta amenaza, se mueve a `downloads/quarantine/`.
