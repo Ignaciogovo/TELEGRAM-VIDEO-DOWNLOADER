@@ -45,9 +45,3 @@ agents.md
 *.swo
 .DS_Store
 Thumbs.db
-
-# Docker
-Dockerfile
-docker-compose.yml
-docker-entrypoint.sh
-.dockerignore
