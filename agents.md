@@ -180,12 +180,17 @@ Los file references de vídeos **muy antiguos** en Telegram caducan más rápido
 
 **No requiere fix**: el sistema es auto-recuperable y los tests pasan 13/13.
 
-### Fase 3: Docker + Cron ⏸️ PAUSADA
-- Dockerfile (python:3.12-slim + ffmpeg)
-- docker-entrypoint.sh (entry point minimal)
+### Fase 3: Docker + Cron ✅ COMPLETADA
+- Dockerfile (python:3.12-slim + clamav + ffmpeg + tini)
+- docker-entrypoint.sh (soporte DOWNLOAD_LIMIT)
 - .dockerignore
+- docker-compose.yml (testing local)
+- Multi-arch: linux/amd64 + linux/arm64
+- Usuario no-root (appuser UID/GID 1000)
+- freshclam durante build (firmas incluidas)
 - Soporte DOWNLOAD_LIMIT via environment variable
-- Volúmenes: ./downloads, .session
+- Volúmenes: /app/downloads, /app/session_data
+- config.yaml actualizado: session_name apunta a session_data/
 
 #### Uso
 
@@ -221,10 +226,10 @@ docker run --rm --env-file .env \
 
 ## 10. Estado Actual
 
-**Rama activa:** `feature/fase-2-bulk-download`
-**Fase:** 2 (Descarga Masiva) ✅ COMPLETADA
-**Estado:** Todos los todos completados (8/8) - Listo para merge a develop
-**Próximo paso:** Merge a develop y comenzar Fase 3 (Docker + Cron)
+**Rama activa:** `feature/fase-3-docker-cron`
+**Fase:** 3 (Docker + Cron) ✅ COMPLETADA
+**Estado:** Todos los todos completados - Listo para merge a develop
+**Próximo paso:** Merge a develop y merge a master
 
 ## 11. To-dos Pendientes Fase 2
 
