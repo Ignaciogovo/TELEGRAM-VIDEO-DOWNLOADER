@@ -1,0 +1,53 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Entornos virtuales
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.spec
+
+# Secrets y configuración local
+.env
+.env.local
+.env.*.local
+
+# Sesión y datos descargados
+*.session
+downloads/
+session_data/
+
+# Tests
+test.sh
+test_real_download.sh
+test_results.json
+real_test_results.json
+temporal.md
+
+# Documentación
+README.md
+agents.md
+
+# IDE y OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+docker-compose.yml
+docker-entrypoint.sh
+.dockerignore
