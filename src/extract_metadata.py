@@ -8,42 +8,11 @@ from typing import Optional
 
 from dotenv import load_dotenv
 from telethon import TelegramClient
-from telethon.tl.types import InputMessagesFilterVideo, DocumentAttributeVideo, DocumentAttributeFilename
+from telethon.tl.types import InputMessagesFilterVideo
 
 load_dotenv()
 
-
-def get_video_duration(video) -> Optional[float]:
-    """Extract duration from video attributes."""
-    for attr in video.attributes:
-        if isinstance(attr, DocumentAttributeVideo):
-            return attr.duration
-    return None
-
-
-def get_video_resolution(video) -> tuple[Optional[int], Optional[int]]:
-    """Extract width and height from video attributes."""
-    for attr in video.attributes:
-        if isinstance(attr, DocumentAttributeVideo):
-            return attr.w, attr.h
-    return None, None
-
-
-def get_filename(video) -> Optional[str]:
-    """Extract original filename from video attributes."""
-    for attr in video.attributes:
-        if isinstance(attr, DocumentAttributeFilename):
-            return attr.file_name
-    return None
-
-
-def format_size(size_bytes: int) -> str:
-    """Format bytes to human readable."""
-    for unit in ("B", "KB", "MB", "GB"):
-        if size_bytes < 1024:
-            return f"{size_bytes:.1f} {unit}"
-        size_bytes /= 1024
-    return f"{size_bytes:.1f} TB"
+from src.utils import format_size, get_video_duration, get_video_resolution, get_filename
 
 
 async def main() -> None:

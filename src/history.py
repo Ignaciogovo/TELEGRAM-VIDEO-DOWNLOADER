@@ -64,35 +64,33 @@ class DownloadHistory:
         if self.conn:
             self.conn.close()
 
-    def is_downloaded(self, message_id: int) -> bool:
-        """Check if a message has already been downloaded.
-
-        Args:
-            message_id: The Telegram message ID.
-
-        Returns:
-            True if the message is already downloaded.
-        """
+    def _get_status(self, message_id: int, expected_status: str) -> bool:
+        """Check if a message has a specific status."""
         row = self.conn.execute(
             "SELECT status FROM downloads WHERE message_id = ?",
             (message_id,),
         ).fetchone()
-        return row is not None and row["status"] == "downloaded"
+        return row is not None and row["status"] == expected_status
+
+    def is_downloaded(self, message_id: int) -> bool:
+        """Check if a message has already been downloaded."""
+        return self._get_status(message_id, "downloaded")
 
     def is_skipped_short(self, message_id: int) -> bool:
-        """Check if a message was skipped for being too short.
+        """Check if a message was skipped for being too short."""
+        return self._get_status(message_id, "skipped_short")
 
-        Args:
-            message_id: The Telegram message ID.
+    def get_output_path(self, message_id: int) -> Optional[str]:
+        """Get the output_path for a downloaded message.
 
         Returns:
-            True if the message was skipped as too short.
+            The file path stored in history, or None if not found.
         """
         row = self.conn.execute(
-            "SELECT status FROM downloads WHERE message_id = ?",
+            "SELECT output_path FROM downloads WHERE message_id = ? AND status = 'downloaded'",
             (message_id,),
         ).fetchone()
-        return row is not None and row["status"] == "skipped_short"
+        return row["output_path"] if row else None
 
     def record_downloaded(
         self,
@@ -162,6 +160,57 @@ class DownloadHistory:
             (message_id, channel_id, filename, duration_seconds),
         )
         self.conn.commit()
+
+    def record_invalid(
+        self,
+        message_id: int,
+        channel_id: str,
+        filename: Optional[str],
+        original_name: Optional[str],
+        error_message: str,
+        output_path: Optional[str] = None,
+    ) -> None:
+        """Record an invalid/corrupted downloaded file.
+
+        Args:
+            message_id: The Telegram message ID.
+            channel_id: The channel identifier.
+            filename: The saved filename.
+            original_name: Original filename from Telegram.
+            error_message: Description of why the file is invalid.
+            output_path: Full path where the file was saved.
+        """
+        now = datetime.now(timezone.utc).isoformat()
+        self.conn.execute(
+            """INSERT OR REPLACE INTO downloads
+               (message_id, channel_id, filename, original_name,
+                status, output_path, error_message, downloaded_at)
+               VALUES (?, ?, ?, ?, 'invalid', ?, ?, ?)""",
+            (message_id, channel_id, filename, original_name, output_path, error_message, now),
+        )
+        self.conn.commit()
+
+    def is_invalid(self, message_id: int) -> bool:
+        """Check if a message was marked as invalid/corrupted."""
+        return self._get_status(message_id, "invalid")
+
+    def get_failed_downloads(self, channel_id: Optional[str] = None) -> list[dict]:
+        """Get list of failed downloads (error or invalid status) for retry.
+
+        Args:
+            channel_id: Optional filter by channel.
+
+        Returns:
+            List of rows with failed download info.
+        """
+        if channel_id:
+            query = "SELECT * FROM downloads WHERE status IN ('error', 'invalid') AND channel_id = ?"
+            params = (channel_id,)
+        else:
+            query = "SELECT * FROM downloads WHERE status IN ('error', 'invalid')"
+            params = ()
+
+        return self.conn.execute(query, params).fetchall()
 
     def record_error(
         self,

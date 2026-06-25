@@ -40,14 +40,6 @@ class ScanResult:
         self.status = status
         self.details = details
 
-    def is_clean(self) -> bool:
-        """Check if the file is clean."""
-        return self.status == self.CLEAN
-
-    def is_threat(self) -> bool:
-        """Check if the file is a threat."""
-        return self.status == self.THREAT
-
 
 class SecurityScanner:
     """Scans downloaded files for security threats."""
@@ -134,7 +126,7 @@ class SecurityScanner:
             elif result.returncode == 1:
                 threat_info = result.stdout.strip() or result.stderr.strip()
                 logger.error("ClamAV: AMENAZA detectada - %s", threat_info)
-                self._quarantine_file(filepath)
+                quarantine_path = self._quarantine_file(filepath)
                 return ScanResult(ScanResult.THREAT, f"ClamAV: {threat_info}")
             else:
                 logger.warning("ClamAV: error inesperado (code=%d)", result.returncode)
@@ -330,11 +322,25 @@ class SecurityScanner:
         except (KeyError, TypeError) as e:
             return ScanResult(ScanResult.ERROR, f"VT parse error: {e}")
 
-    def _quarantine_file(self, filepath: str) -> None:
+    def quarantine_file(self, filepath: str) -> str:
+        """Move a file to the quarantine directory.
+
+        Args:
+            filepath: Path to the file to quarantine.
+
+        Returns:
+            The quarantine path where the file was moved.
+        """
+        return self._quarantine_file(filepath)
+
+    def _quarantine_file(self, filepath: str) -> str:
         """Move a threatening file to the quarantine directory.
 
         Args:
             filepath: Path to the file to quarantine.
+
+        Returns:
+            The quarantine path where the file was moved.
         """
         os.makedirs(self.quarantine_dir, exist_ok=True)
         filename = os.path.basename(filepath)
@@ -352,3 +358,4 @@ class SecurityScanner:
         logger.critical(
             "Fichero movido a cuarentena: %s", quarantine_path
         )
+        return quarantine_path
