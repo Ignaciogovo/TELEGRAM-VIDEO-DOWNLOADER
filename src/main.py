@@ -1,7 +1,6 @@
 """Telegram Video Downloader.
 
-Phase 1: Download a single video from a Telegram channel.
-Phase 2: Bulk download with filtering, security scanning, and resume support.
+Bulk download with filtering, security scanning, resume support, and cron automation.
 """
 
 import argparse
@@ -214,10 +213,44 @@ def parse_args() -> argparse.Namespace:
         help="Canal a usar (username o ID). Debe estar en TELEGRAM_CHANNELS.",
     )
     parser.add_argument(
+        "--list-chats",
+        action="store_true",
+        help="Listar todos los chats de la cuenta y salir.",
+    )
+    parser.add_argument(
+        "--find-chat",
+        type=str,
+        default=None,
+        help="Buscar un chat por nombre e imprimir su ID. Coincidencia parcial.",
+    )
+    parser.add_argument(
         "--config",
         type=str,
         default="config.yaml",
         help="Ruta al archivo de configuración (default: config.yaml).",
+    )
+    parser.add_argument(
+        "--notify-stale",
+        action="store_true",
+        help="Generar notificación de contenedor stale y salir.",
+    )
+    parser.add_argument(
+        "--stale-hours",
+        type=int,
+        default=None,
+        help="Horas que lleva el contenedor corriendo (para --notify-stale).",
+    )
+    parser.add_argument(
+        "--stale-threshold",
+        type=int,
+        default=None,
+        help="Umbral de horas superado (para --notify-stale).",
+    )
+    parser.add_argument(
+        "--stale-started",
+        type=str,
+        default=None,
+        help="Timestamp de cuándo se arrancó el contenedor (para --notify-stale).",
     )
     return parser.parse_args()
 
@@ -241,7 +274,7 @@ async def run_single_download(
     output_dir = config.get("output_dir", "./downloads")
 
     if message_id is not None:
-        message = await get_message_by_id(client, channel_entity, message_id)
+        message = (await client.get_messages(channel_entity, ids=message_id))[0]
     else:
         message = await find_latest_video_message(client, channel_entity)
         if message is None:
@@ -304,9 +337,44 @@ async def main() -> None:
         await run_stats(output_dir)
         return
 
+    if args.notify_stale:
+        from src.notifier import Notifier
+        output_dir = config.get("output_dir", "./downloads")
+        notifier = Notifier(
+            notifications_dir=f"{output_dir}/notifications",
+            notification_email=os.getenv("NOTIFICATION_EMAIL"),
+        )
+        notifier.notify_error(
+            subject=(
+                f"Contenedor telegram-downloader lleva "
+                f"mas de {args.stale_threshold}h en ejecucion"
+            ),
+            message=(
+                f"El contenedor lleva {args.stale_hours}h activo "
+                f"(umbral: {args.stale_threshold}h). "
+                f"Puede estar stuck."
+            ),
+            metadata={
+                "container_name": "telegram-downloader",
+                "running_hours": args.stale_hours,
+                "threshold_hours": args.stale_threshold,
+                "started_at": args.stale_started,
+                "source": "cron-wrapper",
+            },
+        )
+        return
+
     api_id, api_hash, channels = load_env_credentials()
     session_name = config.get("session_name", "telegram_downloader")
     output_dir = config.get("output_dir", "./downloads")
+
+    if os.getenv("DOWNLOAD_LIMIT"):
+        config["max_downloads_per_run"] = int(os.getenv("DOWNLOAD_LIMIT"))
+
+    if args.list_chats or args.find_chat is not None:
+        from src.list_chats import list_chats_main
+        rc = await list_chats_main(args.find_chat, session_name)
+        sys.exit(rc)
 
     if args.channel is not None:
         if args.channel not in channels:
