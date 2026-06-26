@@ -169,23 +169,30 @@ Variables del wrapper:
 | Variable | Default | Descripción |
 |----------|---------|-------------|
 | `DOWNLOADS_DIR` | `$(pwd)/downloads` | Ruta del host para vídeos, logs y notificaciones |
+| `SESSION_DIR` | `$(pwd)/session_data` | Ruta del host para la sesión de Telegram |
 | `MAX_CONTAINER_HOURS` | `12` | Horas antes de generar notificación de "stale container" |
 | `CONTAINER_NAME` | `telegram-downloader` | Nombre del contenedor |
 | `IMAGE_NAME` | `telegram-downloader` | Imagen Docker a lanzar |
 
-> **Importante:** `DOWNLOADS_DIR` debe crearse antes de la primera ejecución (`mkdir -p /ruta/que/quieras`). El wrapper no la crea automáticamente.
+> **Importante:** `DOWNLOADS_DIR` y `SESSION_DIR` deben crearse antes de la primera ejecución (`mkdir -p /ruta/que/quieras`). El wrapper las crea automáticamente si no existen.
 
 **Instalar en crontab:**
 
 ```bash
 crontab -e
-# Añadir una de estas líneas (elegir según la ubicación deseada):
+```
 
+Añadir una de estas líneas:
+
+```bash
 # Cada hora — ubicación por defecto
 0 * * * * cd /workspace/telegram-video-downloader && ./scripts/cron-wrapper.sh >> /var/log/telegram-cron.log 2>&1
 
-# Cada hora — ubicación personalizada (NAS, SSD, etc.)
-0 * * * * cd /workspace/telegram-video-downloader && DOWNLOADS_DIR=/mnt/nas/telegram-descargas ./scripts/cron-wrapper.sh >> /var/log/telegram-cron.log 2>&1
+# Cada hora — con rutas personalizadas
+0 * * * * cd /workspace/telegram-video-downloader && \
+  DOWNLOADS_DIR=/home/pollito/media/telegram_download_film/downloads \
+  SESSION_DIR=/data/docker/docker_compose/TELEGRAM-VIDEO-DOWNLOADER/session_data \
+  ./scripts/cron-wrapper.sh >> /var/log/telegram-cron.log 2>&1
 ```
 
 ## Casos de uso
