@@ -178,19 +178,21 @@ Los file references de vídeos **muy antiguos** en Telegram caducan más rápido
 - En la **siguiente ejecución**, los vídeos fallidos se reintentan automáticamente (no están en `is_downloaded`)
 - Tras 2-3 ejecuciones consecutivas, los vídeos terminan descargándose porque el rate-limiting de Telegram se relaja
 
-**No requiere fix**: el sistema es auto-recuperable y los tests pasan 13/13.
+**No requiere fix**: el sistema es auto-recuperable.
 
 ### Fase 3: Docker + Cron ✅ COMPLETADA
 - Dockerfile (python:3.12-slim + clamav + ffmpeg + tini)
-- docker-entrypoint.sh (soporte DOWNLOAD_LIMIT)
+- docker-entrypoint.sh (sin lógica DOWNLOAD_LIMIT — vive en main.py via env var)
 - .dockerignore
-- docker-compose.yml (testing local)
 - Multi-arch: linux/amd64 + linux/arm64
 - Usuario no-root (appuser UID/GID 1000)
 - freshclam durante build (firmas incluidas)
 - Soporte DOWNLOAD_LIMIT via environment variable
 - Volúmenes: /app/downloads, /app/session_data
 - config.yaml actualizado: session_name apunta a session_data/
+- `scripts/cron-wrapper.sh`: wrapper para cron con detección de contenedor stale y notificación JSON
+- `src/list_chats.py` actualizado: función `list_chats_main()` reutilizable
+- `src/main.py`: integración de `--list-chats` y `--find-chat` como flags del entry point
 
 #### Uso
 
@@ -198,7 +200,7 @@ Los file references de vídeos **muy antiguos** en Telegram caducan más rápido
 ```bash
 docker run --rm -it --env-file .env \
   -v $(pwd)/downloads:/app/downloads \
-  -v $(pwd)/.session:/app/telegram_downloader.session \
+  -v $(pwd)/session_data:/app/session_data \
   telegram-downloader
 ```
 
@@ -206,19 +208,54 @@ docker run --rm -it --env-file .env \
 ```bash
 docker run --rm --env-file .env \
   -v $(pwd)/downloads:/app/downloads \
-  -v $(pwd)/.session:/app/telegram_downloader.session \
+  -v $(pwd)/session_data:/app/session_data \
   telegram-downloader
 ```
 
-**3. Cron ejemplo (diario a las 2:00 AM):**
+**3. Listar todos los chats/canales:**
+```bash
+docker run --rm --env-file .env \
+  -v $(pwd)/session_data:/app/session_data \
+  telegram-downloader --list-chats
+```
+
+**4. Buscar el ID de un chat por nombre:**
+```bash
+# Devuelve solo el ID; exit 0 si hay una sola coincidencia, exit 1 si hay varias o ninguna
+docker run --rm --env-file .env \
+  -v $(pwd)/session_data:/app/session_data \
+  telegram-downloader --find-chat peliculas
+```
+
+**5. Cron con wrapper automático (recomendado):**
+```bash
+chmod +x scripts/cron-wrapper.sh
+
+# Crontab (cada hora)
+0 * * * * cd /path/to/project && ./scripts/cron-wrapper.sh >> /var/log/telegram-cron.log 2>&1
+```
+
+Variables de entorno opcionales del wrapper:
+
+| Variable | Default | Descripción |
+|----------|---------|-------------|
+| `MAX_CONTAINER_HOURS` | `12` | Umbral en horas antes de notificar contenedor stale |
+| `CONTAINER_NAME` | `telegram-downloader` | Nombre del contenedor |
+| `IMAGE_NAME` | `telegram-downloader` | Imagen Docker a lanzar |
+
+Si el contenedor lleva más de `MAX_CONTAINER_HOURS` horas activo, el wrapper ejecuta: **stop** del contenedor stale → **notificación** en `downloads/notifications/notifications.json` (type: `error`) → **relanzamiento** con una ejecución fresca.
+
+**6. Cron directo (alternativa, diario a las 2:00 AM):**
 ```bash
 0 2 * * * docker run --rm --env-file /path/to/.env \
   -v /path/to/downloads:/app/downloads \
-  -v /path/to/.session:/app/telegram_downloader.session \
+  -v /path/to/session_data:/app/session_data \
   telegram-downloader >> /var/log/telegram-downloader.log 2>&1
 ```
 
-> **NOTA**: El archivo `.session` se crea en la primera ejecución interactiva. Las ejecuciones via cron usan el `.session` persistente. Asegúrate de que la primera ejecución se haga manualmente con `-it`.
+> **NOTA**: El archivo de sesión se crea en la primera ejecución interactiva. Las ejecuciones via cron usan la sesión persistente en `session_data/`. Asegúrate de que la primera ejecución se haga manualmente con `-it`.
+>
+> Para suscribirte a un canal privado, obtén su ID con `--list-chats` y añádelo a `TELEGRAM_CHANNELS` en `.env` con el prefijo `-100` (ej. `-1001234567890`).
 
 ### Fases Futuras
 - Posibles nuevas funcionalidades
@@ -277,13 +314,6 @@ docker run --rm --env-file .env \
 - Verificación por vídeo individual
 - Verificación en retry_failed_downloads()
 
-### TODO 7: Tests automatizados básicos ✅ COMPLETADO
-- Crear script de tests sin Docker
-- Tests de: configuración, historial, notificaciones, escáner
-- Tests integrados: CRUD historial, probabilidad escáner, notificaciones
-- Edge cases: config, build_output_path, get_folder_for_channel
-- 12 tests totales pasando
-
 ### TODO 8: Timeout y reintentos configurables ✅ COMPLETADO
 - Timeout configurable para descargas (download_timeout_seconds)
 - Límite de reintentos por vídeo (max_download_retries)
@@ -305,8 +335,7 @@ docker run --rm --env-file .env \
 | 4 | Resumen final de sesión | ✅ Completado |
 | 5 | Notificación de finalización | ✅ Completado |
 | 6 | Validación de espacio en disco | ✅ Completado |
-| 7 | Tests automatizados | ✅ Completado |
-| 8 | Timeout y reintentos | ✅ Completado |
+| 7 | Timeout y reintentos | ✅ Completado |
 
 ## 13. Checklist de Validación de Fase
 

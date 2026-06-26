@@ -1,9 +1,6 @@
 # Imagen base multi-arch
 FROM --platform=$TARGETPLATFORM python:3.12-slim
 
-LABEL maintainer="telegram-downloader"
-LABEL description="Telegram video downloader with security scanning (non-root)"
-
 # Dependencias del sistema (clamav, ffmpeg, tini)
 # freshclam actualiza las firmas durante el build
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -14,11 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && freshclam
 
-# Crear usuario y grupo no-root (UID/GID 1000 estándar)
-ARG UID=1000
-ARG GID=1000
-RUN groupadd --gid ${GID} appuser \
-    && useradd --uid ${UID} --gid ${GID} --create-home --shell /bin/bash appuser
+# Crear usuario y grupo no-root
+RUN groupadd --gid 1000 appuser \
+    && useradd --uid 1000 --gid 1000 --create-home --shell /bin/bash appuser
 
 # Directorio de trabajo
 WORKDIR /app
