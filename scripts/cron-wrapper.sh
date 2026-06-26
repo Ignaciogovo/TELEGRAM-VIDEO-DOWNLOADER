@@ -4,13 +4,16 @@
 #
 # Variables de entorno:
 #   DOWNLOADS_DIR        - ruta del host para downloads (default: $(pwd)/downloads)
-#   MAX_CONTAINER_HOURS   - umbral en horas (default: 12)
+#   SESSION_DIR         - ruta del host para session_data (default: $(pwd)/session_data)
+#   MAX_CONTAINER_HOURS  - umbral en horas (default: 12)
 #   CONTAINER_NAME       - nombre del contenedor (default: telegram-downloader)
-#   IMAGE_NAME           - imagen docker a lanzar (default: telegram-downloader)
+#   IMAGE_NAME          - imagen docker a lanzar (default: telegram-downloader)
 #
-# Ejemplo crontab (ubicación personalizada):
-#   DOWNLOADS_DIR=/mnt/nas/telegram-descargas
-#   0 * * * * cd /workspace/telegram-video-downloader && DOWNLOADS_DIR=/mnt/nas/telegram-descargas ./scripts/cron-wrapper.sh >> /var/log/telegram-cron.log 2>&1
+# Ejemplo crontab (ubicaciones personalizadas):
+#   0 * * * * cd /workspace/telegram-video-downloader && \
+#     DOWNLOADS_DIR=/home/pollito/media/telegram_download_film/downloads \
+#     SESSION_DIR=/data/docker/docker_compose/TELEGRAM-VIDEO-DOWNLOADER/session_data \
+#     ./scripts/cron-wrapper.sh >> /var/log/telegram-cron.log 2>&1
 
 set -euo pipefail
 
@@ -19,10 +22,10 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_DIR"
 
 DOWNLOADS_DIR="${DOWNLOADS_DIR:-$(pwd)/downloads}"
+SESSION_DIR="${SESSION_DIR:-$(pwd)/session_data}"
 CONTAINER_NAME="${CONTAINER_NAME:-telegram-downloader}"
 IMAGE_NAME="${IMAGE_NAME:-telegram-downloader}"
 MAX_HOURS="${MAX_CONTAINER_HOURS:-12}"
-SESSION_DIR="$(pwd)/session_data"
 NOTIFICATIONS_DIR="${DOWNLOADS_DIR}/notifications"
 
 if [ ! -f .env ]; then
