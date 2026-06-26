@@ -189,9 +189,9 @@ Añadir una de estas líneas:
 0 * * * * cd /workspace/telegram-video-downloader && ./scripts/cron-wrapper.sh >> /var/log/telegram-cron.log 2>&1
 
 # Cada hora — con rutas personalizadas
-0 * * * * cd /workspace/telegram-video-downloader && \
-  DOWNLOADS_DIR=/home/pollito/media/telegram_download_film/downloads \
-  SESSION_DIR=/data/docker/docker_compose/TELEGRAM-VIDEO-DOWNLOADER/session_data \
+0 * * * * cd /path/to/project && \
+  DOWNLOADS_DIR=/path/to/downloads \
+  SESSION_DIR=/path/to/session_data \
   ./scripts/cron-wrapper.sh >> /var/log/telegram-cron.log 2>&1
 ```
 
