@@ -1,21 +1,56 @@
-# Telegram API credentials
-# Obtén api_id y api_hash en https://my.telegram.org/apps
-# 1. Inicia sesión con tu número de teléfono
-# 2. Ve a "API development tools"
-# 3. Crea una nueva aplicación (puede ser cualquier nombre y descripción)
-# 4. Copia el App api_id y App api_hash
-api_id: 12345678
-api_hash: "tu_api_hash_aqui"
-
 # Nombre de la sesión (archivo .session donde se guarda la autenticación)
-session_name: "telegram_downloader"
-
-# Username del canal de Telegram (con @ o sin @)
-# Ejemplo: "durov" o "@durov"
-channel_username: "tu_canal_aqui"
+# En Docker: "session_data/telegram_downloader" (volumen montado)
+# En local: "telegram_downloader" (archivo en raíz)
+session_name: "session_data/telegram_downloader"
 
 # Directorio donde se guardarán los vídeos descargados
 output_dir: "./downloads"
 
 # Nivel de log: DEBUG, INFO, WARNING, ERROR, CRITICAL
 log_level: "INFO"
+
+# ============================================
+# FASE 2: Mapeo de canales a carpetas
+# ============================================
+# Las carpetas se asignan por el orden de TELEGRAM_CHANNELS en .env
+# Índice 0 = primer canal, 1 = segundo, 2 = tercero, etc.
+# Canales sin índice definido → default_folder
+channel_folders:
+  0: "peliculas"
+
+default_folder: "uncategorized"
+
+# ============================================
+# FASE 2: Filtros de descarga
+# ============================================
+
+# Duración mínima en segundos para descargar un vídeo
+# Los vídeos más cortos se registran como "saltados" y no se vuelven a evaluar
+min_duration_seconds: 300
+
+# Segundos de espera entre cada descarga
+download_delay_seconds: 30
+
+# Máximo número de descargas por ejecución del script
+max_downloads_per_run: 50
+
+# Timeout máximo en segundos para una descarga (default 1 hora)
+download_timeout_seconds: 3600
+
+# Máximo número de reintentos por vídeo
+max_download_retries: 3
+
+# Espacio mínimo libre en MB antes de detener descargas
+min_free_space_mb: 500
+
+# ============================================
+# FASE 2: Escaneo de seguridad
+# ============================================
+security:
+  # Activar/desactivar escaneo de seguridad
+  enabled: true
+  # Motor de escaneo: "clamav" o "virustotal"
+  engine: "clamav"
+  # Probabilidad de escanear cada vídeo (0.0 a 1.0)
+  # 0.1 = 10% de los vídeos se escanean (tipo aeropuerto)
+  scan_probability: 0.1
