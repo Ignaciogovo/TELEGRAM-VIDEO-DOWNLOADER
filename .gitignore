@@ -36,3 +36,5 @@ Thumbs.db
 
 #git sh
 release.sh
+# Temporal/debug files
+temporal.md
