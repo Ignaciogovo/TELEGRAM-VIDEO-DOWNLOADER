@@ -11,8 +11,8 @@
 #
 # Ejemplo crontab (ubicaciones personalizadas):
 #   0 * * * * cd /workspace/telegram-video-downloader && \
-#     DOWNLOADS_DIR=/home/pollito/media/telegram_download_film/downloads \
-#     SESSION_DIR=/data/docker/docker_compose/TELEGRAM-VIDEO-DOWNLOADER/session_data \
+#     DOWNLOADS_DIR=/path/to/downloads \
+#     SESSION_DIR=/path/to/session_data \
 #     ./scripts/cron-wrapper.sh >> /var/log/telegram-cron.log 2>&1
 
 set -euo pipefail
@@ -42,7 +42,7 @@ if [ -z "$container_id" ]; then
     echo "[$(date -Iseconds)] Contenedor '${CONTAINER_NAME}' no esta corriendo. Lanzando..."
     docker run --rm \
         --name "${CONTAINER_NAME}" \
-        --env-file .env \
+        --env-file "$PROJECT_DIR/.env" \
         -v "${DOWNLOADS_DIR}:/app/downloads" \
         -v "${SESSION_DIR}:/app/session_data" \
         "${IMAGE_NAME}" --all
@@ -67,7 +67,7 @@ if [ "$hours_running" -ge "$MAX_HOURS" ]; then
     # 2. Notificar (datos capturados antes del stop)
     echo "[$(date -Iseconds)] Generando notificacion..."
     docker run --rm \
-        --env-file .env \
+        --env-file "$PROJECT_DIR/.env" \
         -v "${DOWNLOADS_DIR}:/app/downloads" \
         -v "${SESSION_DIR}:/app/session_data" \
         "${IMAGE_NAME}" \
@@ -80,7 +80,7 @@ if [ "$hours_running" -ge "$MAX_HOURS" ]; then
     echo "[$(date -Iseconds)] Lanzando nueva ejecucion..."
     docker run --rm \
         --name "${CONTAINER_NAME}" \
-        --env-file .env \
+        --env-file "$PROJECT_DIR/.env" \
         -v "${DOWNLOADS_DIR}:/app/downloads" \
         -v "${SESSION_DIR}:/app/session_data" \
         "${IMAGE_NAME}" --all
