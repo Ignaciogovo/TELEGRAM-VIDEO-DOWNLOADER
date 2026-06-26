@@ -2,13 +2,15 @@
 # Wrapper para cron: lanza el contenedor telegram-downloader si no está corriendo.
 # Si lleva mas de MAX_CONTAINER_HOURS activo: para, notifica y relanza.
 #
-# Variables de entorno opcionales:
-#   MAX_CONTAINER_HOURS - umbral en horas (default: 12)
-#   CONTAINER_NAME      - nombre del contenedor (default: telegram-downloader)
-#   IMAGE_NAME          - imagen docker a lanzar (default: telegram-downloader)
+# Variables de entorno:
+#   DOWNLOADS_DIR        - ruta del host para downloads (default: $(pwd)/downloads)
+#   MAX_CONTAINER_HOURS   - umbral en horas (default: 12)
+#   CONTAINER_NAME       - nombre del contenedor (default: telegram-downloader)
+#   IMAGE_NAME           - imagen docker a lanzar (default: telegram-downloader)
 #
-# Ejemplo crontab:
-#   0 * * * * cd /workspace/telegram-video-downloader && ./scripts/cron-wrapper.sh >> /var/log/telegram-cron.log 2>&1
+# Ejemplo crontab (ubicación personalizada):
+#   DOWNLOADS_DIR=/mnt/nas/telegram-descargas
+#   0 * * * * cd /workspace/telegram-video-downloader && DOWNLOADS_DIR=/mnt/nas/telegram-descargas ./scripts/cron-wrapper.sh >> /var/log/telegram-cron.log 2>&1
 
 set -euo pipefail
 
@@ -16,17 +18,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_DIR"
 
+DOWNLOADS_DIR="${DOWNLOADS_DIR:-$(pwd)/downloads}"
 CONTAINER_NAME="${CONTAINER_NAME:-telegram-downloader}"
 IMAGE_NAME="${IMAGE_NAME:-telegram-downloader}"
 MAX_HOURS="${MAX_CONTAINER_HOURS:-12}"
-NOTIFICATIONS_DIR="$PROJECT_DIR/downloads/notifications"
+SESSION_DIR="$(pwd)/session_data"
+NOTIFICATIONS_DIR="${DOWNLOADS_DIR}/notifications"
 
 if [ ! -f .env ]; then
     echo "[$(date -Iseconds)] ERROR: no existe .env en $PROJECT_DIR" >&2
     exit 1
 fi
 
-mkdir -p "$NOTIFICATIONS_DIR"
+mkdir -p "${DOWNLOADS_DIR}" "${SESSION_DIR}" "${NOTIFICATIONS_DIR}"
 
 # Busca el contenedor por nombre exacto (^...$ para evitar matches parciales)
 container_id=$(docker ps -q --filter "name=^${CONTAINER_NAME}$" || true)
@@ -36,8 +40,8 @@ if [ -z "$container_id" ]; then
     docker run --rm \
         --name "${CONTAINER_NAME}" \
         --env-file .env \
-        -v "$(pwd)/downloads:/app/downloads" \
-        -v "$(pwd)/session_data:/app/session_data" \
+        -v "${DOWNLOADS_DIR}:/app/downloads" \
+        -v "${SESSION_DIR}:/app/session_data" \
         "${IMAGE_NAME}" --all
     echo "[$(date -Iseconds)] Contenedor lanzado y finalizado."
     exit 0
@@ -61,8 +65,8 @@ if [ "$hours_running" -ge "$MAX_HOURS" ]; then
     echo "[$(date -Iseconds)] Generando notificacion..."
     docker run --rm \
         --env-file .env \
-        -v "$(pwd)/downloads:/app/downloads" \
-        -v "$(pwd)/session_data:/app/session_data" \
+        -v "${DOWNLOADS_DIR}:/app/downloads" \
+        -v "${SESSION_DIR}:/app/session_data" \
         "${IMAGE_NAME}" \
         --notify-stale \
         --stale-hours "$hours_running" \
@@ -74,8 +78,8 @@ if [ "$hours_running" -ge "$MAX_HOURS" ]; then
     docker run --rm \
         --name "${CONTAINER_NAME}" \
         --env-file .env \
-        -v "$(pwd)/downloads:/app/downloads" \
-        -v "$(pwd)/session_data:/app/session_data" \
+        -v "${DOWNLOADS_DIR}:/app/downloads" \
+        -v "${SESSION_DIR}:/app/session_data" \
         "${IMAGE_NAME}" --all
     echo "[$(date -Iseconds)] Ejecucion completada."
     exit 0

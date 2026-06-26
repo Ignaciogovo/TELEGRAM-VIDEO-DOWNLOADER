@@ -22,7 +22,7 @@ Antes de empezar necesitas:
 git clone <repo> telegram-video-downloader
 cd telegram-video-downloader
 
-mkdir -p downloads session_data
+mkdir -p downloads session_data  # o la ruta que definas en DOWNLOADS_DIR
 cp .env.example .env
 nano .env   # editar con tus credenciales
 
@@ -53,6 +53,7 @@ TELEGRAM_API_HASH=tu_api_hash_aqui
 TELEGRAM_CHANNELS=mi_canal,-1001234567890,@otro
 NOTIFICATION_EMAIL=tu@email.com
 VT_API_KEY=
+DOWNLOADS_DIR=./downloads          # ruta del host para vídeos y logs (crearla antes de ejecutar)
 ```
 
 `TELEGRAM_CHANNELS` admite:
@@ -62,8 +63,10 @@ VT_API_KEY=
 
 ### `config.yaml` — comportamiento
 
+> **Nota:** `output_dir` dentro del contenedor es siempre `/app/downloads`. La ruta del **host** se configura via `DOWNLOADS_DIR` en `.env` (o como variable de entorno del wrapper). No es necesario cambiarla aquí.
+
 ```yaml
-output_dir: "./downloads"
+output_dir: "/app/downloads"
 log_level: "INFO"
 session_name: "session_data/telegram_downloader"
 
@@ -107,9 +110,11 @@ Introduce tu número en formato internacional (`+34612345678`) y el código que 
 
 ### Comandos principales
 
+> **Nota:** `-v ${DOWNLOADS_DIR:-$(pwd)/downloads}:/app/downloads` usa la variable `DOWNLOADS_DIR` del `.env` o el default. Cambia `DOWNLOADS_DIR` para almacenar los vídeos en otra ubicación.
+
 | Acción | Docker | Local |
 |--------|--------|-------|
-| Descargar todos los nuevos | `docker run --rm --env-file .env -v $(pwd)/downloads:/app/downloads -v $(pwd)/session_data:/app/session_data telegram-downloader --all` | `python src/main.py --all` |
+| Descargar todos los nuevos | `docker run --rm --env-file .env -v ${DOWNLOADS_DIR:-$(pwd)/downloads}:/app/downloads -v $(pwd)/session_data:/app/session_data telegram-downloader --all` | `python src/main.py --all` |
 | Simular sin descargar (dry-run) | añade `--dry-run` | añade `--dry-run` |
 | Descargar el más reciente | igual sin `--all` | `python src/main.py` |
 | Descargar uno específico (msg id) | añade `--message-id 123` | `python src/main.py --message-id 123` |
@@ -123,6 +128,7 @@ Introduce tu número en formato internacional (`+34612345678`) y el código que 
 docker run --rm --env-file .env \
   -v $(pwd)/session_data:/app/session_data \
   telegram-downloader --list-chats
+```
 
 # Buscar el ID de un chat por nombre (devuelve solo el ID)
 docker run --rm --env-file .env \
@@ -142,7 +148,7 @@ Sobrescribe `max_downloads_per_run` con la variable de entorno `DOWNLOAD_LIMIT`:
 ```bash
 # Docker
 docker run --rm -e DOWNLOAD_LIMIT=5 --env-file .env \
-  -v $(pwd)/downloads:/app/downloads \
+  -v ${DOWNLOADS_DIR:-$(pwd)/downloads}:/app/downloads \
   -v $(pwd)/session_data:/app/session_data \
   telegram-downloader --all
 
@@ -152,24 +158,35 @@ DOWNLOAD_LIMIT=5 python src/main.py --all
 
 ### Ejecución desatendida (cron)
 
-El proyecto incluye `scripts/cron-wrapper.sh` que lanza el contenedor si no está corriendo y notifica si lleva más de X horas activo (configurable).
+El proyecto incluye `scripts/cron-wrapper.sh` que lanza el contenedor si no está corriendo y, si lleva más de `MAX_CONTAINER_HOURS` activo, lo detiene, notifica y relanza.
 
 ```bash
 chmod +x scripts/cron-wrapper.sh
-
-# Crontab (cada hora)
-crontab -e
-# Añadir:
-0 * * * * cd /workspace/telegram-video-downloader && ./scripts/cron-wrapper.sh >> /var/log/telegram-cron.log 2>&1
 ```
 
-Variables opcionales del wrapper:
+Variables del wrapper:
 
 | Variable | Default | Descripción |
 |----------|---------|-------------|
+| `DOWNLOADS_DIR` | `$(pwd)/downloads` | Ruta del host para vídeos, logs y notificaciones |
 | `MAX_CONTAINER_HOURS` | `12` | Horas antes de generar notificación de "stale container" |
 | `CONTAINER_NAME` | `telegram-downloader` | Nombre del contenedor |
 | `IMAGE_NAME` | `telegram-downloader` | Imagen Docker a lanzar |
+
+> **Importante:** `DOWNLOADS_DIR` debe crearse antes de la primera ejecución (`mkdir -p /ruta/que/quieras`). El wrapper no la crea automáticamente.
+
+**Instalar en crontab:**
+
+```bash
+crontab -e
+# Añadir una de estas líneas (elegir según la ubicación deseada):
+
+# Cada hora — ubicación por defecto
+0 * * * * cd /workspace/telegram-video-downloader && ./scripts/cron-wrapper.sh >> /var/log/telegram-cron.log 2>&1
+
+# Cada hora — ubicación personalizada (NAS, SSD, etc.)
+0 * * * * cd /workspace/telegram-video-downloader && DOWNLOADS_DIR=/mnt/nas/telegram-descargas ./scripts/cron-wrapper.sh >> /var/log/telegram-cron.log 2>&1
+```
 
 ## Casos de uso
 
